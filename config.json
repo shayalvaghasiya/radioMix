@@ -1,0 +1,30 @@
+{
+  "database_url": "sqlite:///library.db",
+  "music_library_paths": [],
+  "supported_formats": [
+    ".mp3",
+    ".wav",
+    ".flac",
+    ".ogg",
+    ".m4a"
+  ],
+  "playlist_export_path": "C:\\Users\\shaya\\Downloads",
+  "recent_playlist_days": 15,
+  "rotation_pattern": [
+    "A",
+    "B",
+    "A",
+    "C",
+    "A",
+    "B"
+  ],
+  "log_file": "logs/app.log",
+  "log_level": "INFO",
+  "scheduler_enabled": false,
+  "scheduler_time": "08:00",
+  "scheduler_playlist_count": 20,
+  "scheduler_export_format": "m3u",
+  "custom_export_format": "[Artist] - [Title]",
+  "scheduler_frequency": "daily",
+  "scheduler_day_of_week": 0
+}
