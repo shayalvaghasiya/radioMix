@@ -1,39 +1,59 @@
+# d:\PROJECTS\RadioMix\config\settings.py
 import json
-from pydantic import BaseModel, Field
-from typing import List
+import os
+from pydantic import BaseModel
+from platformdirs import user_config_dir, user_data_dir, user_log_dir, user_music_dir
+
+APP_NAME = "RadioMix"
+APP_AUTHOR = "RadioMix"
 
 class AppSettings(BaseModel):
-    database_url: str = "sqlite:///library.db"
-    music_library_paths: List[str] = Field(default_factory=list)
-    supported_formats: List[str] = Field(default_factory=lambda: ['.mp3', '.wav', '.flac', '.ogg', '.m4a'])
-    playlist_export_path: str = "playlists"
-    recent_playlist_days: int = 15
-    rotation_pattern: List[str] = Field(default_factory=lambda: ["A", "B", "A", "C", "A", "B"])
-    log_file: str = "logs/app.log"
-    log_level: str = "INFO"
+    # Core application paths managed by platformdirs
+    config_path: str = os.path.join(user_config_dir(APP_NAME, APP_AUTHOR), 'settings.json')
+    database_url: str = f"sqlite:///{os.path.join(user_data_dir(APP_NAME, APP_AUTHOR), 'library.db')}"
+    log_path: str = os.path.join(user_log_dir(APP_NAME, APP_AUTHOR), 'app.log')
+    
+    # User-configurable paths
+    music_library_paths: list[str] = []
+    playlist_export_path: str = user_music_dir() # Default to the user's Music folder
+
+    # Playlist settings
+    recent_playlist_days: int = 30
+
+    # Scheduler settings
     scheduler_enabled: bool = False
-    scheduler_time: str = "08:00"
-    scheduler_playlist_count: int = 20
+    scheduler_frequency: str = "daily" # 'daily' or 'weekly'
+    scheduler_day_of_week: int = 0 # 0=Monday, 6=Sunday
+    scheduler_time: str = "10:00"
+    scheduler_playlist_count: int = 50
     scheduler_export_format: str = "m3u"
+
+    # Custom Export
     custom_export_format: str = "[Artist] - [Title]"
-    scheduler_frequency: str = "daily"  # 'daily' or 'weekly'
-    scheduler_day_of_week: int = 0  # 0=Monday, 6=Sunday
 
-    def save(self, path: str = "config.json"):
-        """Saves the current settings to a JSON file."""
-        with open(path, 'w') as f:
-            # Use model_dump() which is the Pydantic v2 equivalent of dict()
-            json.dump(self.model_dump(), f, indent=2)
+    def save(self):
+        """Saves the current settings to the config file."""
+        # Ensure the directory for the config file exists
+        os.makedirs(os.path.dirname(self.config_path), exist_ok=True)
+        with open(self.config_path, 'w') as f:
+            # Use model_dump() for Pydantic v2+
+            json.dump(self.model_dump(), f, indent=4)
 
-def load_settings(path: str = "config.json") -> AppSettings:
-    try:
-        with open(path, 'r') as f:
-            data = json.load(f)
-        return AppSettings(**data)
-    except (FileNotFoundError, json.JSONDecodeError):
-        # If file doesn't exist or is invalid, create one with defaults
-        default_settings = AppSettings()
-        default_settings.save(path)
-        return default_settings
+def load_settings() -> AppSettings:
+    """Loads settings from the user's config directory."""
+    config_file_path = os.path.join(user_config_dir(APP_NAME, APP_AUTHOR), 'settings.json')
+    if os.path.exists(config_file_path):
+        try:
+            with open(config_file_path, 'r') as f:
+                config_data = json.load(f)
+                # Ensure the loaded settings object knows its own path
+                config_data['config_path'] = config_file_path
+                return AppSettings(**config_data)
+        except (json.JSONDecodeError, TypeError):
+            # If file is corrupt or invalid, fall back to defaults
+            pass
+    # Return default settings if no file exists or it's invalid
+    return AppSettings(config_path=config_file_path)
 
+# Global settings instance
 settings = load_settings()
