@@ -82,15 +82,13 @@ class MainWindow(QWidget):
 
         self._setup_menu()
         self._setup_tabs()
-        self.update_stats()
         
         self.scheduler = SchedulerService(settings)
         self.scheduler.generate_signal.connect(self.run_scheduled_generation)
         self.scheduler.start()
 
-        # Auto-scan on startup if configured
-        if settings.music_library_paths:
-            QTimer.singleShot(100, self.rescan_libraries)
+        # Delay heavy initialization until after UI is shown to improve startup speed
+        QTimer.singleShot(50, self._startup_initialization)
 
     def _setup_menu(self):
         self.menu_bar = QMenuBar(self)
@@ -204,7 +202,6 @@ class MainWindow(QWidget):
         self.export_custom_btn.clicked.connect(self.export_custom)
         export_layout.addWidget(self.export_custom_btn)
         layout.addLayout(export_layout)
-        self.reload_filters()
 
     def reload_filters(self):
         session = get_session()
@@ -222,6 +219,13 @@ class MainWindow(QWidget):
             combo.addItems(items)
             combo.setCurrentText(current_text)
             combo.blockSignals(False)
+
+    def _startup_initialization(self):
+        """Load stats and filters after window is shown to improve startup perception."""
+        self.update_stats()
+        self.reload_filters()
+        if settings.music_library_paths:
+            self.rescan_libraries()
 
     def open_settings(self):
         """Opens the settings dialog."""

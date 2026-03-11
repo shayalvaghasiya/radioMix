@@ -17,7 +17,7 @@ class AboutDialog(QDialog):
         title.setFont(font)
         layout.addWidget(title)
 
-        label = QLabel("Playlist Automation Tool\nVersion 1.0")
+        label = QLabel("Playlist Automation Tool\nVersion 1.1")
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(label)
 
